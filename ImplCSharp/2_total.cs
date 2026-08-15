@@ -1,6 +1,6 @@
 #!/usr/bin/env dotnet
 //
-// Script to grep through a government open data archives without downloading them
+// Script to grep through government open data archives without downloading them
 //
 // Features:
 // - Able to fetch a data archive (usually a ZIP compressed CSV file) and stream it right into the dynamic "decompress-reencode-search" pipeline (nothing intermediate gets stored on disk)
@@ -267,7 +267,7 @@ List<string> LoadFilters(string filename)
     // One literal search string per line.
     // Trailing CR (^M) is removed.
     // Empty lines are ignored.
-    // Comment lines starting with "#" ignored.
+    // Comment lines starting with "#" are ignored.
 
     var filters = new List<string>();
     if (!File.Exists(filename))
@@ -295,6 +295,7 @@ List<string> LoadFilters(string filename)
         if (line.TrimStart().StartsWith('#'))
             continue;
 
+        // Note: search lines never get space-trimmed!
         Console.WriteLine($"\t- `{line}`");
 
         filters.Add(line);
@@ -346,7 +347,7 @@ long ProcessCsvStream(
 
         foreach (var filter in filters)
         {
-            if (line.Contains(filter, StringComparison.OrdinalIgnoreCase)) // case-insensitive search
+            if (line.Contains(filter, StringComparison.OrdinalIgnoreCase)) // Case-insensitive search
             {
                 matched = true;
 
@@ -372,6 +373,7 @@ long ProcessCsvStream(
 
     writer.Flush();
 
+    // Totals
     Console.WriteLine($"Search complete. Total lines processed: {lineNumber}; Total matches found: {matchedLines}");
 
     return matchedLines;
