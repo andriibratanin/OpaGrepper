@@ -1,0 +1,12 @@
+# This is a comment line (any line starting with "#")
+#
+# Search strings are used as "contains" predicates
+# Search is case-insensitive
+# Search strings are not trimmed!
+#
+# Example search strings (note that quotes are parts of a search string and they don't have to be always closed):
+# - `"Стрелякін`
+# - `"Стрелякін Кудяблик Білкович`
+# - `"Стрелякін Кудяблик Білкович","24.08.1991 00:00:00"`
+# - etc.
+#
