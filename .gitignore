@@ -1,0 +1,9 @@
+*.bak
+*.tmp
+*.zip
+
+*.csv
+*.json
+
+#*filter.txt
+*.timestamp.txt
