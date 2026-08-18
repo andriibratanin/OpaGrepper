@@ -3,7 +3,7 @@
 // Script to grep through government open data archives without downloading them
 //
 // Features:
-// - Able to fetch a data archive (usually a ZIP compressed CSV file) and stream it right into the dynamic "decompress-reencode-search" pipeline (nothing intermediate gets stored on disk)
+// - Able to fetch a data archive (usually a ZIP compressed CSV file) and stream it right into a dynamic "decompress-reencode-search" pipeline (where nothing intermediate gets stored on disk)
 // - Able to use pre-cached archive as test data (thus skipping the Internet calls)
 // - Data source throttling mechanism included
 //
