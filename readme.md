@@ -5,12 +5,12 @@ Grep Open Data with/without caching them locally.
 Both: Shell-scripted PoC (the `ImplShell` folder) and its more advanced C# successor (the `ImplCSharp` folder) are included.
 
 Possible work flows:
-  - go to `ImplShell` folder, configure the data source in `0_common.sh`, run `1_data_download.sh` (to cache data archive into `Data` folder);
-  - then go to `ImplCSharp` folder, make sure you use the same data source in `2_total.cs`, make changes you need, run `2_total_run.ps1` to test them OFFLINE;
-  - don't forget to re-run the `1_data_download.sh` script periodically in case if you are interested in data updates ;)
-- Stand-alone C# code ("production"): go to `ImplCSharp` folder, configure the data source in `2_total.cs`, run `2_total_run.ps1` to get results from the Internet (ONLINE).
 - Stand-alone Shell-scripted PoC - go to the `ImplShell` folder.
 - Development of the C# code:
+  - go to the `ImplShell` folder, configure the data source in the `0_common.sh` script, run the `1_data_download.sh` script (to cache a data archive into the `Data` folder);
+  - then go to the `ImplCSharp` folder, make sure you use the same data source in `2_total_run` scripts, make changes you need to the source `2_total.cs` file, then run `2_total_run` (PowerShell or Shell version depending on your platform) to test your changes OFFLINE;
+  - don't forget to re-run the `1_data_download.sh` script in the `ImplShell` folder periodically if you are interested in data updates ;)
+- Stand-alone C# code ("production", i.e. ONLINE): go to the `ImplCSharp` folder, configure the data source in `2_total_run` scripts, then run them to get the results straight from the Internet .
 
 HINT: if you ever get confused - numbers in filenames are your guides
 
