@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Script to run C# file based application located in `2_total.cs` file
+# Script to run the C# file based application with source in `2_total.cs` file
 #
 # Make sure .NET 10 SDK is installed:
 # - sudo add-apt-repository ppa:dotnet/backports -y
