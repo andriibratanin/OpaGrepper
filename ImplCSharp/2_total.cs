@@ -11,7 +11,7 @@
 // - .NET 10 SDK (https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 //
 // How to run? This is a so-called ".NET file based application", use the following terminal command to start it:
-// - `dotnet run 0_total.cs`
+// - `dotnet run 2_total.cs`
 //
 // Exit codes:
 // - 0: success
