@@ -10,7 +10,7 @@ Possible work flows:
   - go to the `ImplShell` folder, configure the data source in the `0_common.sh` script, run the `1_data_download.sh` script (to cache a data archive into the `Data` folder);
   - then go to the `ImplCSharp` folder, make sure you use the same data source in `2_total_run` scripts, make changes you need to the source `2_total.cs` file, then run `2_total_run` (PowerShell or Shell version depending on your platform) to test your changes OFFLINE;
   - don't forget to re-run the `1_data_download.sh` script in the `ImplShell` folder periodically if you are interested in data updates ;)
-- Stand-alone C# code ("production", i.e. ONLINE): go to the `ImplCSharp` folder, configure the data source in `2_total_run` scripts, then run them to get the results straight from the Internet .
+- Stand-alone C# code ("production", i.e. ONLINE): go to the `ImplCSharp` folder, configure the data source in `2_total_run` scripts, then run them to get the results straight from the Internet.
 
 HINT: if you ever get confused - numbers in filenames are your guides
 

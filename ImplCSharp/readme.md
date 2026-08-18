@@ -4,10 +4,10 @@ More advanced rewrite of the PoC.
 
 Pros:
 - Aggressive in-memory streaming, nothing intermediate gets stored on disk
-- Much faster than the Shell analog
-- May use an archive (pre-downloaded from the source into `../Data` folder by the `../ImplShell/1_data_download.sh` script) as test/cache data (i.e. "offline" mode)
+- Much faster than the predecessor
+- May use a data archive (pre-downloaded from the source into `../Data` folder by the `../ImplShell/1_data_download.sh` script) as test/cache data (i.e. "offline" mode)
 - Runs on both: Windows/Linux/WSL
-- Easy to run in Docker
+- Ready for Docker
 
 See the `2_total.cs` file's header for more details.  
 
@@ -36,5 +36,5 @@ Version history:
 - № 1.0: First implementation with hard-coded values
 - № 2.0:
   - Added:
-    - Docker image
+    - Docker support
     - `SOURCE_URL`, `ICONV`, `RESULT_DIR` environment variables (get rid of hardcode in source)

@@ -7,7 +7,7 @@ Pros:
 - No additional dependencies/requirements
 
 Cons:
-- Stores downloaded and intermediate processed data on disk (takes lots of space)
+- Stores downloaded and intermediate processed data on disk (takes LOTS of space - make sure you have at least 20Gb of free disk space!)
 - Slow
 - Linux/WSL-only
 
@@ -17,9 +17,11 @@ How to use:
 - before running `4_data_filter.sh` put lines of interest (you are looking for in the source) into `4_data_filter.txt` file
 - data source lines (containing your lines of interest from `4_data_filter.txt`) will be dumped into `5_data_result.csv` file
 
+HINT: scripts are named to be in order, they are like steps of one sequential "ETL pipeline"
+
 **Troubleshooting**
 
-~~Search may not work as expected in case if the filter file contains Windows-style line endings.~~ (fixed)
+~~Search may not work as expected in case if the "filter" file contains Windows-style line endings.~~ (fixed)
 
 To check if filter file contains redundant symbols (like `^M`) run:
 ```bash
