@@ -28,54 +28,76 @@ using ICSharpCode.SharpZipLib.Zip;
 using System.Net;
 using System.Text;
 
-const string Version = "1.0";
+const string Version = "2.0";
 
-const bool Win1251EncodedDataFile = true;
-const string VersionString = Win1251EncodedDataFile
-    ? $"eGov № {Version} THZCIG (throttle-http-zip-csv-iconv-grep)"
-    : $"eGov № {Version} THZCG (throttle-http-zip-csv-grep)";
+const string IconvEnvVar = "ICONV";
+const string SourceUrlEnvVar = "SOURCE_URL";
+const string ResultDirEnvVar = "RESULT_DIR";
 
-// Executive proceedings
-const string DataSourceFilename = "28-ex_csv_asvp";
-const string DataSourceUrl = $"https://data.gov.ua/dataset/22aef563-3e87-4ed9-92e8-d764dc02f426/resource/d1a38c08-0f3a-4687-866f-f28f50df7c46/download/{DataSourceFilename}.zip";
-// Debtors
-//const string DataSourceFilename = "29-ex_csv_erb";
-//const string DataSourceUrl = $"https://data.gov.ua/dataset/783b9b50-faba-4cc9-a393-60485e395b1d/resource/e6ea76c1-01f4-4bd0-a282-7d92d6ecc2a1/download/{DataSourceFilename}.zip";
-
-const string PreCachedArchiveFile = $@"..\Data\{DataSourceFilename}.zip";
-const string ExpectedFileInArchive = $"{DataSourceFilename}.csv";
-
-const string TimestampFile = $"{DataSourceFilename}.timestamp.txt";
 const int TimestampFileMaxAgeMinutes = 23 * 60; // 23 hours
-
-// The search logic is simple: data lines containing one of filter lines will be saved into result (i.e. it is a multiline grep)
-const string FilterFile = $"{DataSourceFilename}.filter.txt";
-const string OutputFile = $"{DataSourceFilename}.result.csv";
-
-// Required for Windows-1251 encoding operations
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 try
 {
-    Console.WriteLine( "===========================================================");
-    Console.WriteLine($" Open Data Grepper for '{DataSourceFilename}' ");
-    Console.WriteLine($" {VersionString}");
-    Console.WriteLine( "===========================================================");
+    var win1251EncodedDataFile = !string.Equals(
+            Environment.GetEnvironmentVariable(IconvEnvVar),
+            "false",
+            StringComparison.OrdinalIgnoreCase
+    );
+
+    var versionString = win1251EncodedDataFile
+        ? $"eGov № {Version} THZCIG (throttle-http-zip-csv-iconv-grep)"
+        : $"eGov № {Version} THZCG (throttle-http-zip-csv-grep)";
+
+    Console.WriteLine("===========================================================");
+    Console.WriteLine($" Open Data Grepper");
+    Console.WriteLine($" {versionString}");
+    Console.WriteLine("===========================================================");
+
+    var dataSourceUrl = Environment.GetEnvironmentVariable(SourceUrlEnvVar);
+    if (string.IsNullOrWhiteSpace(dataSourceUrl))
+    {
+        Console.WriteLine($"ERROR: Environment variable {SourceUrlEnvVar} is required!");
+        Environment.ExitCode = 2;
+        return;
+    }
+
+    string dataSourceFilename = Path.GetFileNameWithoutExtension(new Uri(dataSourceUrl).LocalPath);
+    Console.WriteLine($"Running for '{dataSourceFilename}' data source");
+
+    // Required for Windows-1251 encoding operations
+    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+    var dataDir = Path.Combine("..", "Data"); // "..\Data"
+
+    var preCachedArchiveFile = Path.Combine(dataDir, $"{dataSourceFilename}.zip");
+    var expectedFileInArchive = $"{dataSourceFilename}.csv";
+
+    var resultDirEnv = Environment.GetEnvironmentVariable(ResultDirEnvVar);
+    var resultDir = string.IsNullOrWhiteSpace(resultDirEnv)
+        //? AppContext.BaseDirectory
+        ? Directory.GetCurrentDirectory()
+        : resultDirEnv;
+
+    var timestampFile = Path.Combine(resultDir, $"{dataSourceFilename}.timestamp.txt");
+
+    // The search logic is simple: data lines containing one of filter lines will be saved into result (i.e. it is a multiline grep)
+    var filterFile = Path.Combine(resultDir, $"{dataSourceFilename}.filter.txt");
+    var outputFile = Path.Combine(resultDir, $"{dataSourceFilename}.result.csv");
 
     var nowWithMills = DateTimeOffset.UtcNow;
     var now = nowWithMills.AddTicks(-(nowWithMills.Ticks % TimeSpan.TicksPerSecond));
-    //Console.WriteLine("");
+    Console.WriteLine("");
     Console.WriteLine($"Current UTC timestamp: {now.UtcDateTime:O}");
 
     Console.WriteLine("");
     Console.WriteLine("Checking throttling conditions...");
-    bool needsProcessing = NeedsProcessing(now);
+    bool needsProcessing = NeedsProcessing(preCachedArchiveFile, timestampFile, now);
     if (needsProcessing)
     {
         Console.WriteLine("");
-        Console.WriteLine($"Loading filters: {FilterFile}...");
+        Console.WriteLine($"Loading filters: {filterFile}...");
 
-        var filters = LoadFilters(FilterFile);
+        var filters = LoadFilters(filterFile);
         if (filters.Count == 0)
         {
             Console.WriteLine("No filters defined - nothing to do.");
@@ -90,18 +112,21 @@ try
         Console.WriteLine("Downloading and processing new archive...");
 
         var result = await ProcessArchiveFromHttpAsync(
-            DataSourceUrl,
-            ExpectedFileInArchive,
+            preCachedArchiveFile,
+            timestampFile,
+            dataSourceUrl,
+            expectedFileInArchive,
+            win1251EncodedDataFile,
             filters,
-            OutputFile
+            outputFile
         );
 
         Console.WriteLine("Download and processing complete");
         Console.WriteLine("");
 
-        File.WriteAllText(TimestampFile, now.ToUnixTimeSeconds().ToString());
+        File.WriteAllText(timestampFile, now.ToUnixTimeSeconds().ToString());
 
-        Console.WriteLine($"Operation timestamp saved to: {TimestampFile}");
+        Console.WriteLine($"Operation timestamp saved to: {timestampFile}");
         Console.WriteLine("");
 
         Environment.ExitCode = 0;
@@ -128,23 +153,23 @@ catch (Exception ex)
 }
 
 
-bool NeedsProcessing(DateTimeOffset now)
+bool NeedsProcessing(string preCachedArchiveFile, string timestampFile, DateTimeOffset now)
 {
-    if (File.Exists(PreCachedArchiveFile))
+    if (File.Exists(preCachedArchiveFile))
     {
-        Console.WriteLine($"Local archive found: {PreCachedArchiveFile} - will use it as test data file");
+        Console.WriteLine($"Local archive found: {preCachedArchiveFile} - will use it as test data file");
 
         return true;
     }
 
-    if (!File.Exists(TimestampFile))
+    if (!File.Exists(timestampFile))
     {
         Console.WriteLine("Timestamp file not found - assuming this is the first run");
 
         return true;
     }
 
-    var text = File.ReadAllText(TimestampFile).Trim();
+    var text = File.ReadAllText(timestampFile).Trim();
 
     if (!long.TryParse(text, out var unixTimestamp))
     {
@@ -176,8 +201,11 @@ bool NeedsProcessing(DateTimeOffset now)
 }
 
 async Task<long> ProcessArchiveFromHttpAsync(
+    string preCachedArchiveFile,
+    string timestampFile,
     string url,
     string csvFilename,
+    bool win1251EncodedDataFile,
     List<string> filters,
     string outputFilename)
 {
@@ -188,8 +216,8 @@ async Task<long> ProcessArchiveFromHttpAsync(
     try
     {
         using var testDataFileHttpHandler = new TestDataFileHandler(
-                    PreCachedArchiveFile,
-                    TimestampFile,
+                    preCachedArchiveFile,
+                    timestampFile,
                     new HttpClientHandler()
                 );
         using var http = new HttpClient(testDataFileHttpHandler)
@@ -241,7 +269,7 @@ async Task<long> ProcessArchiveFromHttpAsync(
 
             Console.WriteLine("");
             Console.WriteLine("Streaming CSV content into search filters...");
-            var result = ProcessCsvStream(zip, filters, temporaryOutput);
+            var result = ProcessCsvStream(win1251EncodedDataFile, zip, filters, temporaryOutput);
 
             Console.WriteLine("CSV processing complete");
 
@@ -305,6 +333,7 @@ List<string> LoadFilters(string filename)
 }
 
 long ProcessCsvStream(
+    bool win1251EncodedDataFile,
     Stream csvStream,
     List<string> filters,
     string temporaryOutput)
@@ -312,7 +341,7 @@ long ProcessCsvStream(
     Console.WriteLine("\tApplying the on-the-fly Windows-1251 to UTF-8 converion...");
 
     // Note: Decode Windows-1251 directly if needed
-    var sourceEncoding = Win1251EncodedDataFile ? Encoding.GetEncoding(1251) : Encoding.UTF8;
+    var sourceEncoding = win1251EncodedDataFile ? Encoding.GetEncoding(1251) : Encoding.UTF8;
     using var reader = new StreamReader(
         csvStream,
         sourceEncoding,
