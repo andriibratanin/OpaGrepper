@@ -1,0 +1,6 @@
+*.csv
+*.tmp
+*.txt
+
+*.ps1
+*.sh
