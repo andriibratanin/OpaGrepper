@@ -17,7 +17,7 @@ FROM alpine:3.24 AS final
 LABEL \
     org.opencontainers.image.title="Open Data Grepper" \
     org.opencontainers.image.description="Grep Open Data without caching them locally" \
-    org.opencontainers.image.version="v2.0" \
+    org.opencontainers.image.version="v2.1" \
     org.opencontainers.image.source="https://github.com/andriibratanin/OpaGrepper" \
     org.opencontainers.image.authors="Andrii Bratanin"
 #    org.opencontainers.image.revision="${COMMIT}" \

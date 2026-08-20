@@ -34,7 +34,6 @@ How to get this archive? Download it manually of run the `../ImplShell/1_data_do
 
 Version history:
 - № 1.0: First implementation with hard-coded values
-- № 2.0:
-  - Added:
-    - Docker support
-    - `SOURCE_URL`, `ICONV`, `RESULT_DIR` environment variables (get rid of hardcode in source)
+- № 2.0: Docker support
+  - Added `SOURCE_URL`, `ICONV`, `RESULT_DIR` environment variables (get rid of hardcode in source)
+- № 2.1: Better local data processing, scripts and logging improvements

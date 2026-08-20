@@ -28,7 +28,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using System.Net;
 using System.Text;
 
-const string Version = "2.0";
+const string Version = "2.1";
 
 const string IconvEnvVar = "ICONV";
 const string SourceUrlEnvVar = "SOURCE_URL";
