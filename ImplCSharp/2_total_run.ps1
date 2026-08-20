@@ -13,7 +13,7 @@ $env:SOURCE_URL = "https://data.gov.ua/dataset/22aef563-3e87-4ed9-92e8-d764dc02f
 
 # Where to place results
 # Note: this is not a "Data" (possibly pre-cached data source) directory location
-$env:RESULT_DIR = (Resolve-Path (Join-Path $PSScriptRoot "..\Data")).Path
+$env:RESULT_DIR = (Resolve-Path (Join-Path $PSScriptRoot ".")).Path
 
 dotnet run 2_total.cs
 

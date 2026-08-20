@@ -21,7 +21,7 @@ export SOURCE_URL="https://data.gov.ua/dataset/22aef563-3e87-4ed9-92e8-d764dc02f
 # Where to place results
 # Note: this is not a "Data" (possibly pre-cached data source) directory location
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-export RESULT_DIR="$(realpath "$SCRIPT_DIR/../Data")"
+export RESULT_DIR="$(realpath "$SCRIPT_DIR")"
 
 dotnet run 2_total.cs
 
