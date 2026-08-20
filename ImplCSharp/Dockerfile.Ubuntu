@@ -26,14 +26,16 @@ LABEL \
 
 # Note: to find correct version of "libicu" library use:
 # RUN ldconfig -p | grep -i icu || true
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        libicu78 \
-    && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update \
+#    && apt-get install -y --no-install-recommends \
+#        libicu78 \
+#    && rm -rf /var/lib/apt/lists/*
+# Note: the app will successfully run even without the "libicu" if the "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT" environment variable set
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 
 WORKDIR "/App"
 
-COPY --from=builder publish/ .
+COPY --link --from=builder publish/ .
 
 ENV SOURCE_URL=""
 ENV ICONV="true"

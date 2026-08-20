@@ -22,11 +22,14 @@ LABEL \
     org.opencontainers.image.authors="Andrii Bratanin"
 #    org.opencontainers.image.revision="${COMMIT}" \
 
-RUN apk add --no-cache libgcc libstdc++ icu-libs
+#RUN apk add --no-cache libgcc libstdc++ icu-libs
+# Note: the app will successfully run even without the "icu-libs" if the "DOTNET_SYSTEM_GLOBALIZATION_INVARIANT" environment variable set
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+RUN apk add --no-cache libgcc libstdc++
 
 WORKDIR "/App"
 
-COPY --from=builder publish/ .
+COPY --link --from=builder publish/ .
 
 ENV SOURCE_URL=""
 ENV ICONV="true"
