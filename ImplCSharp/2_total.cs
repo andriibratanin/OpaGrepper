@@ -230,7 +230,8 @@ async Task<long> ProcessArchiveFromHttpAsync(
         response.EnsureSuccessStatusCode();
 
         Console.WriteLine("");
-        Console.WriteLine($"HTTP status: {(int)response.StatusCode} {response.StatusCode}");
+        Console.WriteLine($"HTTP status  : {(int)response.StatusCode} {response.StatusCode}");
+        Console.WriteLine($"Last-Modified: {response.Content.Headers.LastModified?.ToString("O") ?? "unknown"}");
 
         if (response.Content.Headers.ContentLength is long contentLength)
             Console.WriteLine($"Response ZIP content length: {contentLength:D} bytes");
@@ -428,77 +429,86 @@ sealed class TestDataFileHandler : DelegatingHandler
         CancellationToken cancellationToken)
     {
         Console.WriteLine("Test data file handler:");
+        Console.WriteLine($"\t{request.Method} {request.RequestUri}");
 
         if (!File.Exists(dataFilename) ||
             (request.Method != HttpMethod.Head && request.Method != HttpMethod.Get))
         {
+            // Online
             Console.WriteLine($"\tGoing ONLINE - local archive with test data not found: {dataFilename}");
-            Console.WriteLine($"{request.Method} {request.RequestUri}");
 
             return base.SendAsync(request, cancellationToken);
         }
+
+        // Offline
+        Console.WriteLine($"\tStaying OFFLINE - local archive with test data found: {dataFilename}");
 
         // HEAD or GET
         cancellationToken.ThrowIfCancellationRequested();
 
         var fileInfo = new FileInfo(dataFilename);
 
-        if (request.Method == HttpMethod.Head)
+        var lastModified = ReadTimestamp(timestampFilename);
+        if (lastModified is null)
         {
-            Console.WriteLine($"\tResponding to HEAD request using local test data: {dataFilename}");
-
-            var lastModified = ReadTimestamp(timestampFilename);
-
-            var headResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)
             {
                 RequestMessage = request,
-                Content = new ByteArrayContent(Array.Empty<byte>())
-            };
-
-            headResponse.Content.Headers.ContentLength = fileInfo.Length;
-            headResponse.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
-            headResponse.Content.Headers.LastModified = lastModified;
-
-            Console.WriteLine($"\tLast-Modified: {lastModified:O}");
-            Console.WriteLine($"\tLocal archive size: {fileInfo.Length:D} bytes");
-
-            return Task.FromResult(headResponse);
+                Content = new StringContent("Failed to read timestamp.")
+            });
         }
-
-        // GET
-        Console.WriteLine($"\tStaying OFFLINE - using local archive as data source: {dataFilename}");
-        Console.WriteLine($"\tLocal archive size: {fileInfo.Length:D} bytes");
-
-        var stream = new FileStream(
-            dataFilename,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read,
-            bufferSize: 1024 * 1024,
-            useAsync: true
-        );
+        //Console.WriteLine($"\tLast-Modified: {lastModified:O}");
+        //Console.WriteLine($"\tLocal archive size: {fileInfo.Length:D} bytes");
 
         var response = new HttpResponseMessage(HttpStatusCode.OK)
         {
-            RequestMessage = request,
-            Content = new StreamContent(stream)
+            RequestMessage = request
         };
 
-        response.Content.Headers.ContentLength = fileInfo.Length;
-        response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
+        HttpContent content;
+        if (request.Method == HttpMethod.Head)
+        {
+            content = new ByteArrayContent(Array.Empty<byte>());
+        }
+        else
+        {
+            // GET
+            var stream = new FileStream(
+                dataFilename,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 1024 * 1024,
+                useAsync: true
+            );
+
+            content = new StreamContent(stream);
+        }
+
+        content.Headers.ContentLength = fileInfo.Length;
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
+        content.Headers.LastModified = lastModified;
+
+        response.Content = content;
 
         return Task.FromResult(response);
     }
 
-    private static DateTimeOffset ReadTimestamp(string filename)
+    private static DateTimeOffset? ReadTimestamp(string filename)
     {
         if (!File.Exists(filename))
-            throw new FileNotFoundException($"Timestamp file not found: {filename}"); // TODO: Consider changing logic to 404
+        {
+            Console.WriteLine($"ERROR: Timestamp file not found: {filename}");
+            return null;
+        }
 
         var text = File.ReadAllText(filename).Trim();
 
         if (!long.TryParse(text, out var unixTimestamp))
-            throw new InvalidDataException($"Timestamp file contains an invalid Unix timestamp: {filename}"); // TODO: Consider changing logic to 500
+        {
+            Console.WriteLine($"ERROR: Timestamp file contains an invalid Unix timestamp: {filename}");
+            return null;
+        }
 
         return DateTimeOffset.FromUnixTimeSeconds(unixTimestamp);
     }
